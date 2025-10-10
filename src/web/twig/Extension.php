@@ -175,7 +175,7 @@ class Extension extends AbstractExtension
             'class' => [
                 'image-wrap',
                 $inset ? 'inset-image' : null,
-                $hasMobile ? 'to-md:hidden' : null,
+                $hasMobile ? 'max-md:hidden' : null,
                 $isMobile ? 'md:hidden' : null,
                 $class
             ],
@@ -292,14 +292,34 @@ class Extension extends AbstractExtension
             return '';
         }
         if ($asset->kind === 'video') {
+            $mobileVideo = $asset->mobileVideo->eagerly()->one() ?? null;
             $asPlayer = $options['asPlayer'] ?? ($asset->asPlayer ?? false);
             if ($asPlayer) {
                 return $this->renderPlayer($asset, $options);
             }
+            $mobileVideoRender = $mobileVideo ? $this->renderVideo($mobileVideo, [
+                ...$options,
+                'isMobile' => true,
+            ]) : '';
 
-            return $this->renderVideo($asset, $options);
+            if ($mobileVideo) {
+                $options['hasMobile'] = true;
+            }
+
+            return $mobileVideoRender.$this->renderVideo($asset, $options);
         }
-        return $this->renderImageWrap($asset, $options);
+
+        $mobileAsset = $asset->mobileImage->eagerly()->one() ?? null;
+        $mobileImage = $mobileAsset ? $this->renderImageWrap($mobileAsset, [
+            ...$options,
+            'isMobile' => true,
+        ]) : '';
+
+        if ($mobileAsset) {
+            $options['hasMobile'] = true;
+        }
+
+        return $mobileImage.$this->renderImageWrap($asset, $options);
     }
 
     /**
