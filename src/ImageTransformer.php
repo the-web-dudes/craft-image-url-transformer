@@ -9,8 +9,7 @@ use craft\elements\Asset;
 use craft\errors\ImageTransformException;
 use craft\helpers\App;
 use craft\helpers\Html;
-use thewebdudes\craftimageurltransformer\models\ImageTransform;
-use craft\models\ImageTransform as CraftImageTransform;
+use craft\models\ImageTransform;
 use Illuminate\Support\Collection;
 use yii\base\NotSupportedException;
 
@@ -19,7 +18,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
     public const SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'gif', 'png', 'avif'];
     protected Asset $asset;
 
-    public function getTransformUrl(Asset $asset, ImageTransform|CraftImageTransform $imageTransform, bool $immediately): string
+    public function getTransformUrl(Asset $asset, ImageTransform $imageTransform, bool $immediately): string
     {
         $this->asset = $asset;
         $this->assertTransformable();
@@ -73,9 +72,11 @@ class ImageTransformer extends Component implements ImageTransformerInterface
         if ($format) {
             $filterString .= ":format($format)";
         }
+
         if ($quality) {
             $filterString .= ":quality($quality)";
         }
+
         if ($filters) {
             $filterString .= "$filters";
         }
