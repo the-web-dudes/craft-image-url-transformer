@@ -9,7 +9,8 @@ use craft\elements\Asset;
 use craft\errors\ImageTransformException;
 use craft\helpers\App;
 use craft\helpers\Html;
-use craft\models\ImageTransform;
+use thewebdudes\craftimageurltransformer\models\ImageTransform;
+use craft\models\ImageTransform as CraftImageTransform;
 use Illuminate\Support\Collection;
 use yii\base\NotSupportedException;
 
@@ -18,7 +19,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
     public const SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'gif', 'png', 'avif'];
     protected Asset $asset;
 
-    public function getTransformUrl(Asset $asset, ImageTransform $imageTransform, bool $immediately): string
+    public function getTransformUrl(Asset $asset, ImageTransform|CraftImageTransform $imageTransform, bool $immediately): string
     {
         $this->asset = $asset;
         $this->assertTransformable();
@@ -64,15 +65,19 @@ class ImageTransformer extends Component implements ImageTransformerInterface
         $width = $params->get('width') ?? '';
         $height = $params->get('height') ?? '';
         $quality = $params->get('quality') ?? '';
+        $filters = $params->get('filters') ?? '';
         $format = $params->get('format') ?? 'webp';
         $fit = $params->get('fit') ?? '';
 
-        $filters = '';
+        $filterString = '';
         if ($format) {
-            $filters .= ":format($format)";
+            $filterString .= ":format($format)";
         }
         if ($quality) {
-            $filters .= ":quality($quality)";
+            $filterString .= ":quality($quality)";
+        }
+        if ($filters) {
+            $filterString .= "$filters";
         }
 
         $directives = "{$width}x{$height}";
@@ -80,8 +85,8 @@ class ImageTransformer extends Component implements ImageTransformerInterface
         if ($fit) {
             $directives = "$fit/$directives";
         }
-        if  ($filters) {
-            $directives .= "/filters$filters";
+        if  ($filterString) {
+            $directives .= "/filters$filterString";
         }
 
         $base = '';
@@ -119,6 +124,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
             'quality' => $imageTransform->quality ?: Craft::$app->getConfig()->general->defaultImageQuality,
             'format' => $this->getFormatValue($imageTransform),
             'fit' => $this->getFitValue($imageTransform),
+            'filters' => $imageTransform->filters,
 //            'background' => $this->getBackgroundValue($imageTransform),
 //            'gravity' => $this->getGravityValue($imageTransform),
         ])->whereNotNull();
