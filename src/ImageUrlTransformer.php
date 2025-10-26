@@ -3,13 +3,10 @@
 namespace thewebdudes\craftimageurltransformer;
 
 use Craft;
-use craft\base\Event;
-use craft\base\Model;
 use craft\base\Plugin;
 use craft\imagetransforms\FallbackTransformer;
 use craft\imagetransforms\ImageTransformer as CraftImageTransformer;
 use craft\models\ImageTransform;
-use thewebdudes\craftimageurltransformer\behaviors\ImageTransformBehaviour;
 use thewebdudes\craftimageurltransformer\web\twig\Extension;
 
 /**
@@ -37,6 +34,10 @@ class ImageUrlTransformer extends Plugin
     {
         parent::init();
 
+        Craft::$container->set(ImageTransform::class, [
+            'class' => models\ImageTransform::class,
+        ]);
+
         Craft::$container->set(
             CraftImageTransformer::class,
             ImageTransformer::class,
@@ -45,14 +46,6 @@ class ImageUrlTransformer extends Plugin
         Craft::$container->set(
             FallbackTransformer::class,
             ImageTransformer::class,
-        );
-
-        Event::on(
-            ImageTransform::class,
-            Model::EVENT_DEFINE_BEHAVIORS,
-            function (Event $event) {
-                $event->behaviors['filters'] = ImageTransformBehaviour::class;
-            }
         );
 
         Craft::$app->view->registerTwigExtension(new Extension());
