@@ -338,7 +338,7 @@ class Extension extends AbstractExtension
                 'height' => $height,
                 'crop' => 'center'
             ]);
-            $srcset = implode(' ', array_map(function ($m) use ($src, $width, $height) {
+            $srcset = implode(', ', array_map(function ($m) use ($src, $width, $height) {
                 return UrlHelper::url($src, [
                     'width' => $width * $m,
                     'height' => $height ? $height * $m : null,
