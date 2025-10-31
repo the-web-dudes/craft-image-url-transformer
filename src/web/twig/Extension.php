@@ -326,24 +326,29 @@ class Extension extends AbstractExtension
      * @throws Throwable
      * @throws InvalidConfigException
      */
-    public function renderShopifyImage($src, $options = []): string
+    public function renderShopifyImage($shopifyImage = [], $options = []): string
     {
-        $width = $options['transform']['width'] ?? null;
-        $height = $options['transform']['height'] ?? null;
+        $src = $shopifyImage['url'] ?? null;
+        $width = $shopifyImage['width'] ?? null;
+        $height = $shopifyImage['height'] ?? null;
+        $options['width'] = $width;
+        $options['height'] = $height;
+        $widthTransform = $options['transform']['width'] ?? 1800;
+        $heightTransform = $options['transform']['height'] ?? null;
         $srcset = null;
 
         if ($width) {
             $src = UrlHelper::url($src, [
-                'width' => $width,
-                'height' => $height,
+                'width' => $widthTransform ?? null,
+                'height' => $heightTransform ?? null,
                 'crop' => 'center'
             ]);
-            $srcset = implode(', ', array_map(function ($m) use ($src, $width, $height) {
+            $srcset = implode(', ', array_map(function ($m) use ($src, $widthTransform, $heightTransform) {
                 return UrlHelper::url($src, [
-                    'width' => $width * $m,
-                    'height' => $height ? $height * $m : null,
-                    'crop' => 'center'
-                ]) . ' ' . $width * $m . 'w';
+                        'width' => $widthTransform ? $widthTransform * $m : null,
+                        'height' => $heightTransform ? $heightTransform * $m : null,
+                        'crop' => 'center'
+                    ]) . ' ' . $widthTransform * $m . 'w';
             }, [0.5, 1, 2]));
         }
         return $this->renderImageWrap(null, [
