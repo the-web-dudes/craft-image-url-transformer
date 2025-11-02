@@ -198,7 +198,7 @@ class Extension extends AbstractExtension
         $inset     = $options['inset'] ?? false;
         $hasMobile = $options['hasMobile'] ?? false;
         $isMobile  = $options['isMobile'] ?? false;
-        $src       = $asset->url;
+        $src       = $options['src'] ?? ($asset->externalVideoUrl ?? $asset->url);
         $poster    = $asset->videoThumbnail?->eagerly()->one() ?? null;
 
         // TODO: add ffmpeg or cloudflare
@@ -251,18 +251,26 @@ class Extension extends AbstractExtension
     public function renderPlayer(Asset $asset, array $options = []): string
     {
         $inset     = $options['inset'] ?? false;
-        $url       = $options['src'] ?? $asset->externalVideoUrl;
+        $url       = $options['src'] ?? ($asset->externalVideoUrl ?? null);
+        $code      = $option['code'] ?? ($asset->embed->media->code ?? null);
+        $provider  = $option['providerName'] ?? ($asset->embed->media->providerName ?? null);
         $autoplay  = $options['autoplay'] ?? null;
         $width     = $asset->assetWidth ?? ($asset->width ?? 1920);
         $height    = $asset->assetHeight ?? ($asset->height ?? 1080);
         $transform = $options['transform'] ?? null;
-        $poster    = $asset->isExternalVideo ? $asset : $asset->videoThumbnail?->eagerly()->one();
+        $poster    = ($asset->isExternalVideo ?? null) ? $asset : $asset->videoThumbnail?->eagerly()->one();
 
         return Html::tag(
             'b-player',
             Html::tag(
                 'div',
-                Html::tag('video', null, [
+                $code ? Html::tag('div', null, [
+                    'data' => [
+                        'el' => 'main',
+                        'plyr-provider' => $provider,
+                        'plyr-embed-id' => $code
+                    ]
+                ]) : Html::tag('video', null, [
                     'src' => $url ?? ($asset->url ?? null),
                     'width' => $width,
                     'height' => $height,
@@ -291,7 +299,7 @@ class Extension extends AbstractExtension
         if (!$asset) {
             return '';
         }
-        if ($asset->kind === 'video') {
+        if ($asset->kind === 'video' || ($asset->isExternalVideo ?? null)) {
             $mobileVideo = $asset->mobileVideo->eagerly()->one() ?? null;
             $asPlayer = $options['asPlayer'] ?? ($asset->asPlayer ?? false);
             if ($asPlayer) {
