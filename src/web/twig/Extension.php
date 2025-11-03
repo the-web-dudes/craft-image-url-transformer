@@ -302,7 +302,11 @@ class Extension extends AbstractExtension
         if ($asset->kind === 'video' || ($asset->isExternalVideo ?? null)) {
             $mobileVideo = $asset->mobileVideo->eagerly()->one() ?? null;
             $asPlayer = $options['asPlayer'] ?? ($asset->asPlayer ?? false);
-            if ($asPlayer) {
+            $code = $options['code'] ?? ($asset->embed->media->code ?? null);
+            if ($code) {
+                $options['code'] = $code;
+            }
+            if ($asPlayer || $code) {
                 return $this->renderPlayer($asset, $options);
             }
             $mobileVideoRender = $mobileVideo ? $this->renderVideo($mobileVideo, [
