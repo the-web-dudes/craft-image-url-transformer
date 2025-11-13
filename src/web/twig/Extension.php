@@ -29,6 +29,51 @@ class Extension extends AbstractExtension
         ];
     }
 
+    private function _getVideoId(string $url)
+    {
+        // YouTube patterns
+        $youtubePatterns = [
+            // Standard YouTube URLs
+            '/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/',
+            // YouTube shorts
+            '/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/',
+            // YouTube with additional parameters
+            '/youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/',
+        ];
+
+        // Vimeo patterns
+        $vimeoPatterns = [
+            // Standard Vimeo URLs
+            '/vimeo\.com\/(\d+)/',
+            // Vimeo player URLs
+            '/player\.vimeo\.com\/video\/(\d+)/',
+            // Vimeo with additional parameters
+            '/vimeo\.com\/.*\/(\d+)/',
+        ];
+
+        // Check YouTube patterns
+        foreach ($youtubePatterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return [
+                    'provider' => 'youtube',
+                    'id' => $matches[1]
+                ];
+            }
+        }
+
+        // Check Vimeo patterns
+        foreach ($vimeoPatterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return [
+                    'provider' => 'vimeo',
+                    'id' => $matches[1]
+                ];
+            }
+        }
+
+        return null;
+    }
+
     private function _parseSized(array $sizes): string
     {
         $breaks = [
@@ -252,8 +297,7 @@ class Extension extends AbstractExtension
     {
         $inset     = $options['inset'] ?? false;
         $url       = $options['src'] ?? ($asset->externalVideoUrl ?? null);
-        $code      = $option['code'] ?? ($asset->embed->media->code ?? null);
-        $provider  = $option['providerName'] ?? ($asset->embed->media->providerName ?? null);
+        $code      = $option['code'] ?? $this->_getVideoId($asset->externalVideoUrl);
         $autoplay  = $options['autoplay'] ?? null;
         $width     = $asset->assetWidth ?? ($asset->width ?? 1920);
         $height    = $asset->assetHeight ?? ($asset->height ?? 1080);
@@ -267,8 +311,9 @@ class Extension extends AbstractExtension
                 $code ? Html::tag('div', null, [
                     'data' => [
                         'el' => 'main',
-                        'plyr-provider' => $provider,
-                        'plyr-embed-id' => $code
+                        'plyr-provider' => $code['provider'],
+                        'plyr-embed-id' => $code['id'],
+                        'poster' => $poster ? ($transform ? $poster->getUrl($transform) : $poster->url) : null,
                     ]
                 ]) : Html::tag('video', null, [
                     'src' => $url ?? ($asset->url ?? null),
@@ -302,7 +347,7 @@ class Extension extends AbstractExtension
         if ($asset->kind === 'video' || ($asset->isExternalVideo ?? null)) {
             $mobileVideo = $asset->mobileVideo->eagerly()->one() ?? null;
             $asPlayer = $options['asPlayer'] ?? ($asset->asPlayer ?? false);
-            $code = $options['code'] ?? ($asset->embed->media->code ?? null);
+            $code = $options['code'] ?? $this->_getVideoId($asset->externalVideoUrl);
             if ($code) {
                 $options['code'] = $code;
             }
