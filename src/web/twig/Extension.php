@@ -29,8 +29,11 @@ class Extension extends AbstractExtension
         ];
     }
 
-    private function _getVideoId(string $url)
+    private function _getVideoId(?string $url)
     {
+        if (!$url) {
+            return null;
+        }
         // YouTube patterns
         $youtubePatterns = [
             // Standard YouTube URLs
