@@ -25,6 +25,7 @@ class Extension extends AbstractExtension
         return [
             new TwigFunction('renderImage', [$this, 'renderImage'], ['is_safe' => ['html']]),
             new TwigFunction('renderAsset', [$this, 'renderAsset'], ['is_safe' => ['html']]),
+            new TwigFunction('assetAspectRatio', [$this, 'assetRatio']),
             new TwigFunction('renderShopifyImage', [$this, 'renderShopifyImage'], ['is_safe' => ['html']]),
         ];
     }
@@ -192,6 +193,18 @@ class Extension extends AbstractExtension
     private function _gcd(int $a, int $b): int
     {
         return $b ? $this->_gcd($b, $a % $b) : $a;
+    }
+
+    public function assetRatio($asset, array $options = []): string
+    {
+        $width = $options['width'] ?? ($asset->assetWidth ?? ($asset->width ?? null));
+        $height = $options['height'] ?? ($asset->assetHeight ?? ($asset->height ?? null));
+        $ratio = $options['ratio'] ?? null;
+        if ($width && $height) {
+            $gcd = $this->_gcd($width, $height);
+            $ratio = ($width / $gcd) . '/' . ($height / $gcd);
+        }
+        return $ratio;
     }
 
     /**
