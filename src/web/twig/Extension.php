@@ -224,6 +224,7 @@ class Extension extends AbstractExtension
         [$width, $height] = $this->_transformedSize($width, $height, $options['transform'] ?? null);
 
         $ratio = $options['ratio'] ?? null;
+        $gcd = null;
         if ($width && $height) {
             $gcd = $this->_gcd($width, $height);
             $ratio = ($width / $gcd) . '/' . ($height / $gcd);
@@ -240,7 +241,11 @@ class Extension extends AbstractExtension
                 $isMobile ? 'md:hidden' : null,
                 $class
             ],
-            'style' => $ratio && !$inset ? 'aspect-ratio: ' . $ratio : null
+            'style' => [
+                'aspect-ratio' => $ratio && !$inset ? $ratio : null,
+                '--aspect-width' => $width / $gcd,
+                '--aspect-height' => $height / $gcd,
+            ]
         ]);
     }
 
