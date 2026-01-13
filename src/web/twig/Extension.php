@@ -241,11 +241,11 @@ class Extension extends AbstractExtension
                 $isMobile ? 'md:hidden' : null,
                 $class
             ],
-            'style' => [
+            'style' => array_filter([
                 'aspect-ratio' => $ratio && !$inset ? $ratio : null,
                 '--aspect-width' => $width / $gcd,
                 '--aspect-height' => $height / $gcd,
-            ]
+            ])
         ]);
     }
 
