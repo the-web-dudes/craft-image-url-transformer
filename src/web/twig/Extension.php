@@ -144,14 +144,17 @@ class Extension extends AbstractExtension
         }
 
         $transform = $options['transform'] ?? null;
+        $sizes     = $transform['sizes'] ?? null;
         $width     = $options['width'] ?? ($asset->assetWidth ?? ($asset->width ?? null));
         $height    = $options['height'] ?? ($asset->assetHeight ?? ($asset->height ?? null));
         $alt       = $options['alt'] ?? ($asset->caption ?? ($asset->alt ?? ($asset->title ?? null)));
         $isGif     = $asset->extension === 'gif';
 
-
         $src = !$isGif && $transform ? $asset->getUrl($transform) : $asset->url;
-        $srcset = !$isGif && $transform ? $asset->getSrcset([$width / 2, $width, $width * 2], $transform) : null;
+        $srcset = !$isGif && $transform ? $asset->getSrcset(
+            $sizes ?: ($width <= 1500 ? ['1x', '1.5x', '2x'] : ['1x', '2x']),
+            $transform
+        ) : null;
 
         return $this->imageMarkup([
             ...$options,
