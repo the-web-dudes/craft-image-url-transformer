@@ -9,8 +9,11 @@ use craft\elements\Asset;
 use craft\errors\ImageTransformException;
 use craft\helpers\App;
 use craft\helpers\Html;
+use craft\helpers\UrlHelper;
 use craft\models\ImageTransform;
 use Illuminate\Support\Collection;
+use thewebdudes\craftimageurltransformer\models\Settings;
+use yii\base\InvalidConfigException;
 use yii\base\NotSupportedException;
 
 class ImageTransformer extends Component implements ImageTransformerInterface
@@ -42,7 +45,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
 
     private function sign($path)
     {
-        $secret = App::env('IMAGOR_SECRET');
+        $secret = ImageUrlTransformer::getInstance()->getSettings()->secret;
         $hash = base64_encode(
             hash_hmac('sha1', $path, $secret, true)
         );
@@ -52,13 +55,134 @@ class ImageTransformer extends Component implements ImageTransformerInterface
         return $hash . '/' . $path;
     }
 
+    public function getTransformer(): mixed
+    {
+        return ImageUrlTransformer::getInstance()->getSettings()->transformer;
+    }
+
     protected function assetUrl(Collection $params)
     {
-        $basePath = rtrim(
+        $transformer = $this->getTransformer();
+
+        if (is_callable($transformer)) {
+            return call_user_func($transformer, $params, $this->asset);
+        }
+
+        $map = [
+            Settings::TRANSFORMER_IMAGE_WSRV => [$this, 'wsrvUrl'],
+            Settings::TRANSFORMER_IMAGE_CLOUDFLARE => [$this, 'cloudflareUrl'],
+            Settings::TRANSFORMER_IMAGE_CLOUDFLARE_WORKER => [$this, 'cloudflareWorkerUrl'],
+            Settings::TRANSFORMER_IMAGE_IMAGOR => [$this, 'imagorUrl'],
+        ];
+        return call_user_func($map[$transformer], $params);
+    }
+
+    protected function cloudflareWorkerUrl(Collection $params)
+    {
+        return $this->cloudflareUrl($params, true);
+    }
+    protected function cloudflareUrl(Collection $params, $forWorker = false)
+    {
+        $base = ImageUrlTransformer::getInstance()->getSettings()->transformerBaseUrl ?: UrlHelper::siteUrl();
+
+        $cloudflareParams = [];
+        $width = $params->get('width') ?? '';
+        $height = $params->get('height') ?? '';
+        $quality = $params->get('quality') ?? '';
+        $filters = $params->get('filters') ?? '';
+        $format = $params->get('format') ?? 'webp';
+        $fit = $params->get('fit') ?? '';
+
+        if ($width) {
+            $cloudflareParams[] = "width=$width";
+        }
+
+        if ($height) {
+            $cloudflareParams[] = "height=$height";
+        }
+
+        if ($quality) {
+            $cloudflareParams[] = "quality=$quality";
+        }
+
+        if ($filters) {
+            $cloudflareParams[] = $filters;
+        }
+
+        if ($format) {
+            $cloudflareParams[] = "format=$format";
+        }
+
+        if ($fit) {
+            $cloudflareParams[] = "fit=$fit";
+        }
+
+        $transformUrlParts = [
+            rtrim($base, '/'),
+            $forWorker
+                ? $this->sign(implode(',', $cloudflareParams)."/{$this->asset->getPath()}")
+                : "cdn-cgi/images".implode(',', $cloudflareParams)."/{$this->getBasePath()}"
+        ];
+
+        return Html::encodeSpaces(implode('/', $transformUrlParts));
+    }
+
+    /**
+     * @throws InvalidConfigException
+     */
+    protected function wsrvUrl(Collection $params)
+    {
+        $width = $params->get('width') ?? '';
+        $height = $params->get('height') ?? '';
+        $quality = $params->get('quality') ?? '';
+        $filters = $params->get('filters') ?? '';
+        $format = $params->get('format') ?? 'webp';
+        $fit = $params->get('fit') ?? '';
+
+        $params = [
+            'url' => ltrim($this->asset->getUrl(), 'https:')
+        ];
+
+        if ($width) {
+            $params['w'] = $width;
+        }
+
+        if ($height) {
+            $params['h'] = $height;
+        }
+
+        if ($quality) {
+            $params['q'] = $quality;
+        }
+
+        if ($format) {
+            $params['output'] = $format;
+        }
+
+        if ($fit) {
+            $params['fit'] = $fit;
+        }
+
+        if ($filters) {
+            $params['filt'] = $filters;
+        }
+
+        return Html::encodeSpaces(
+            UrlHelper::url('https://wsrv.nl/', $params)
+        );
+    }
+
+    protected function getBasePath(): string
+    {
+        return rtrim(
             $this->asset->fs->getRootUrl() . $this->asset->getVolume()->getSubpath(),
             '/'
         );
+    }
 
+    protected function imagorUrl(Collection $params)
+    {
+        $basePath = $this->getBasePath();
         $parts = parse_url($basePath);
 
         $width = $params->get('width') ?? '';
@@ -90,13 +214,9 @@ class ImageTransformer extends Component implements ImageTransformerInterface
             $directives .= "/filters$filterString";
         }
 
-        $base = '';
-        if (isset($parts['host'])) {
-            $auth = $parts['user'] ?? '';
-            if (isset($parts['pass'])) $auth .= ":" . ($parts['pass']);
-            if ($auth) $auth .= '@';
-
-            $base = (isset($parts['scheme']) ? ($parts['scheme'] . ':') : '') . "//{$auth}{$parts['host']}" . (isset($parts['port']) ? (':' . $parts['port']) : '');
+        $base = ImageUrlTransformer::getInstance()->getSettings()->transformerBaseUrl ?? '';
+        if (!$base && isset($parts['host'])) {
+            $base = (isset($parts['scheme']) ? ($parts['scheme'] . ':') : '') . "//{$parts['host']}" . (isset($parts['port']) ? (':' . $parts['port']) : '');
         }
 
         return Html::encodeSpaces(
@@ -185,12 +305,38 @@ class ImageTransformer extends Component implements ImageTransformerInterface
 
     protected function getFitValue(ImageTransform $imageTransform): string
     {
-        return match ($imageTransform->mode) {
-            'stretch' => 'stretch',
-            'crop' => '',
-            'letterbox' => 'pad',
-            default => 'fit-in',
-        };
+        $transformer = $this->getTransformer();
+        if (is_callable($transformer)) {
+            return $imageTransform->mode;
+        }
+
+        $fitMap = [
+            Settings::TRANSFORMER_IMAGE_IMAGOR => [
+                'stretch' => 'stretch',
+                'crop' => '',
+                'letterbox' => 'pad',
+                'fit' => 'fit-in',
+            ],
+            Settings::TRANSFORMER_IMAGE_WSRV => [
+                'stretch' => 'fill',
+                'crop' => 'cover',
+                'letterbox' => 'inside',
+                'fit' => 'contain',
+            ],
+            Settings::TRANSFORMER_IMAGE_CLOUDFLARE => [
+                'stretch' => 'squeeze',
+                'crop' => 'cover',
+                'letterbox' => 'scale-down',
+                'fit' => 'contain',
+            ],
+            Settings::TRANSFORMER_IMAGE_CLOUDFLARE_WORKER => [
+                'stretch' => 'squeeze',
+                'crop' => 'cover',
+                'letterbox' => 'scale-down',
+                'fit' => 'contain',
+            ]
+        ];
+        return $fitMap[$transformer][$imageTransform->mode ?? 'crop'];
     }
 
     protected function getFormatValue(ImageTransform $imageTransform): string

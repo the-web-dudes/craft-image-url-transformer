@@ -7,12 +7,15 @@ use craft\base\Plugin;
 use craft\imagetransforms\FallbackTransformer;
 use craft\imagetransforms\ImageTransformer as CraftImageTransformer;
 use craft\models\ImageTransform;
+use craft\base\Model;
 use thewebdudes\craftimageurltransformer\web\twig\Extension;
+use thewebdudes\craftimageurltransformer\models\Settings;
 
 /**
  * Image Url Transformer plugin
  *
  * @method static ImageUrlTransformer getInstance()
+ * @method Settings getSettings()
  * @author @the-web-dudes
  * @copyright @the-web-dudes
  * @license MIT
@@ -49,5 +52,10 @@ class ImageUrlTransformer extends Plugin
         );
 
         Craft::$app->view->registerTwigExtension(new Extension());
+    }
+
+    protected function createSettingsModel(): ?Model
+    {
+        return Craft::createObject(Settings::class);
     }
 }
