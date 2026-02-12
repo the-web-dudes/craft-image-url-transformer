@@ -246,8 +246,8 @@ class Extension extends AbstractExtension
             ],
             'style' => array_filter([
                 'aspect-ratio' => $ratio && !$inset ? $ratio : null,
-                '--aspect-width' => $width / $gcd,
-                '--aspect-height' => $height / $gcd,
+                '--aspect-width' => $width ? $width / $gcd : null,
+                '--aspect-height' => $height ? $height / $gcd : null,
             ])
         ]);
     }
