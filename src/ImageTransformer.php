@@ -203,7 +203,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
         }
 
         if ($focal) {
-            $filterString .= ":focal(".implode([','], $focal).")";
+            $filterString .= ":focal(".str_replace('x', ',', $focal).")";
         }
 
         if ($filters) {
