@@ -191,6 +191,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
         $filters = $params->get('filters') ?? '';
         $format = $params->get('format') ?? 'webp';
         $fit = $params->get('fit') ?? '';
+        $focal = $params->get('gravity') ?? null;
 
         $filterString = '';
         if ($format) {
@@ -199,6 +200,10 @@ class ImageTransformer extends Component implements ImageTransformerInterface
 
         if ($quality) {
             $filterString .= ":quality($quality)";
+        }
+
+        if ($focal) {
+            $filterString .= ":focal(".implode([','], $focal).")";
         }
 
         if ($filters) {
@@ -246,8 +251,8 @@ class ImageTransformer extends Component implements ImageTransformerInterface
             'format' => $this->getFormatValue($imageTransform),
             'fit' => $this->getFitValue($imageTransform),
             'filters' => $imageTransform->filters,
+            'gravity' => $this->getGravityValue($imageTransform),
 //            'background' => $this->getBackgroundValue($imageTransform),
-//            'gravity' => $this->getGravityValue($imageTransform),
         ])->whereNotNull();
     }
 
@@ -263,6 +268,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
 
         return "$value[0]x$value[1]";
     }
+
     protected function getGravity(ImageTransform $imageTransform): ?array
     {
         if ($this->asset->getHasFocalPoint()) {
@@ -273,7 +279,6 @@ class ImageTransformer extends Component implements ImageTransformerInterface
             return null;
         }
 
-        // TODO: maybe just do this in Craft
         $parts = explode('-', $imageTransform->position);
         $yPosition = $parts[0] ?? null;
         $xPosition = $parts[1] ?? null;

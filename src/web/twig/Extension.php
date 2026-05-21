@@ -235,6 +235,10 @@ class Extension extends AbstractExtension
 
         $options['width'] = $width;
         $options['height'] = $height;
+        $focalPoint = null;
+        if ($asset->getHasFocalPoint()) {
+            $focalPoint = $asset->getFocalPoint(true);
+        }
 
         return Html::tag('div', $asset ? $this->renderImage($asset, $options) : $this->imageMarkup($options), [
             'class' => [
@@ -245,6 +249,7 @@ class Extension extends AbstractExtension
                 $class
             ],
             'style' => array_filter([
+                '--focal-point' => $focalPoint ?? null,
                 'aspect-ratio' => $ratio && !$inset ? $ratio : null,
                 '--aspect-width' => $width ? $width / $gcd : null,
                 '--aspect-height' => $height ? $height / $gcd : null,
