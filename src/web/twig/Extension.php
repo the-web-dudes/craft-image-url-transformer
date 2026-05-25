@@ -236,7 +236,7 @@ class Extension extends AbstractExtension
         $options['width'] = $width;
         $options['height'] = $height;
         $focalPoint = null;
-        if ($asset->getHasFocalPoint()) {
+        if ($asset && $asset->getHasFocalPoint()) {
             $focalPoint = $asset->getFocalPoint(true);
         }
 

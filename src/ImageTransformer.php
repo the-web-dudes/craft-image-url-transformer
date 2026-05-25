@@ -271,7 +271,7 @@ class ImageTransformer extends Component implements ImageTransformerInterface
 
     protected function getGravity(ImageTransform $imageTransform): ?array
     {
-        if ($this->asset->getHasFocalPoint()) {
+        if ($this->asset && $this->asset->getHasFocalPoint()) {
             return $this->asset->getFocalPoint();
         }
 
