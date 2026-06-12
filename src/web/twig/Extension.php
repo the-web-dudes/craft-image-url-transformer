@@ -151,8 +151,9 @@ class Extension extends AbstractExtension
         $isGif     = $asset->extension === 'gif';
 
         $src = !$isGif && $transform ? $asset->getUrl($transform) : $asset->url;
+        $sizesMultiplier = $width <= 1500 ? [0.5, 1, 2] : [1, 2];
         $srcset = !$isGif && $transform ? $asset->getSrcset(
-            $sizes ?: ($width <= 1500 ? ['1x', '1.5x', '2x'] : ['1x', '2x']),
+            $sizes ?: array_map(fn($size) => round($size * $width) . 'w', $sizesMultiplier),
             $transform
         ) : null;
 
