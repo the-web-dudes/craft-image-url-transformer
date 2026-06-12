@@ -176,6 +176,7 @@ class Extension extends AbstractExtension
         $alt       = $options['alt'] ?? ($asset->caption ?? ($asset->alt ?? ($asset->title ?? null)));
         $lazy      = $options['lazy'] ?? true;
         $sizes     = $options['sizes'] ?? [];
+        $size      = $options['size'] ?? '';
         $isGif     = $options['isGif'] ?? false;
         $src       = $options['src'] ?? '';
         $srcset    = $options['srcset'] ?? null;
@@ -185,7 +186,7 @@ class Extension extends AbstractExtension
             'width' => $width,
             'height' => $height,
             'alt' => $alt,
-            'sizes' => !$isGif ? $this->_parseSized($sizes) : null,
+            'sizes' => !$isGif ? $size ?? $this->_parseSized($sizes) : null,
             'srcset' => $srcset,
             'src' => $src,
             'loading' => $lazy ? 'lazy' : null,
