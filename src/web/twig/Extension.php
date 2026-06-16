@@ -376,7 +376,7 @@ class Extension extends AbstractExtension
             return '';
         }
         if ($asset->kind === 'video' || ($asset->isExternalVideo ?? null)) {
-            $mobileVideo = $asset->mobileVideo->eagerly()->one() ?? null;
+            $mobileVideo = $asset->mobileVideo?->eagerly()->one() ?? null;
             $asPlayer = $options['asPlayer'] ?? ($asset->asPlayer ?? false);
             $code = $options['code'] ?? $this->_getVideoId($asset->externalVideoUrl);
             if ($code) {
@@ -397,7 +397,7 @@ class Extension extends AbstractExtension
             return $mobileVideoRender.$this->renderVideo($asset, $options);
         }
 
-        $mobileAsset = $asset->mobileImage->eagerly()->one() ?? null;
+        $mobileAsset = $asset->mobileImage?->eagerly()->one() ?? null;
         $mobileImage = $mobileAsset ? $this->renderImageWrap($mobileAsset, [
             ...$options,
             'isMobile' => true,
