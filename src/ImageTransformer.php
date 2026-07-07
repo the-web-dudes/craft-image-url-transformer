@@ -18,7 +18,7 @@ use yii\base\NotSupportedException;
 
 class ImageTransformer extends Component implements ImageTransformerInterface
 {
-    public const SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'gif', 'png', 'avif'];
+    public const SUPPORTED_IMAGE_FORMATS = ['jpg', 'jpeg', 'gif', 'png', 'avif', 'tif', 'tiff'];
     protected Asset $asset;
 
     public function getTransformUrl(Asset $asset, ImageTransform $imageTransform, bool $immediately): string

@@ -36,6 +36,7 @@ class ImageUrlTransformer extends Plugin
     public function init(): void
     {
         parent::init();
+        Craft::$app->getImages()->supportedImageFormats = ImageTransformer::SUPPORTED_IMAGE_FORMATS;
 
         Craft::$container->set(ImageTransform::class, [
             'class' => models\ImageTransform::class,
