@@ -310,7 +310,7 @@ class Extension extends AbstractExtension
             [
                 'class' => [
                     'video-wrap',
-                    $hasMobile ? 'to-md:hidden' : null,
+                    $hasMobile ? 'max-md:hidden' : null,
                     $isMobile ? 'md:hidden' : null,
                     $lazy ? 'lazy-video' : null,
                     $inset ? 'inset-image' : null,
