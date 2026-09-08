@@ -25,6 +25,7 @@ class Extension extends AbstractExtension
         return [
             new TwigFunction('renderImage', [$this, 'renderImage'], ['is_safe' => ['html']]),
             new TwigFunction('renderAsset', [$this, 'renderAsset'], ['is_safe' => ['html']]),
+            new TwigFunction('renderVideo', [$this, 'renderVideo'], ['is_safe' => ['html']]),
             new TwigFunction('assetAspectRatio', [$this, 'assetRatio']),
             new TwigFunction('renderShopifyImage', [$this, 'renderShopifyImage'], ['is_safe' => ['html']]),
         ];
@@ -275,7 +276,7 @@ class Extension extends AbstractExtension
         $hasMobile = $options['hasMobile'] ?? false;
         $isMobile  = $options['isMobile'] ?? false;
         $src       = $options['src'] ?? ($asset->externalVideoUrl ?? $asset->url);
-        $poster    = $asset->videoThumbnail?->eagerly()->one() ?? null;
+        $poster    = isset($asset->videoThumbnail) ? $asset->videoThumbnail?->eagerly()->one() ?? null : null;
 
         // TODO: add ffmpeg or cloudflare
 
@@ -333,7 +334,7 @@ class Extension extends AbstractExtension
         $width     = $asset->assetWidth ?? ($asset->width ?? 1920);
         $height    = $asset->assetHeight ?? ($asset->height ?? 1080);
         $transform = $options['transform'] ?? null;
-        $poster    = ($asset->isExternalVideo ?? null) ? $asset : $asset->videoThumbnail?->eagerly()->one();
+        $poster    = ($asset->isExternalVideo ?? null) ? $asset : (isset($asset->videoThumbnail) ? $asset->videoThumbnail?->eagerly()->one() ?? null : null);
 
         return Html::tag(
             'b-player',
@@ -376,7 +377,7 @@ class Extension extends AbstractExtension
             return '';
         }
         if ($asset->kind === 'video' || ($asset->isExternalVideo ?? null)) {
-            $mobileVideo = $asset->mobileVideo?->eagerly()->one() ?? null;
+            $mobileVideo = isset($asset->mobileVideo) ? $asset->mobileVideo?->eagerly()->one() ?? null : null;
             $asPlayer = $options['asPlayer'] ?? ($asset->asPlayer ?? false);
             $code = $options['code'] ?? $this->_getVideoId($asset->externalVideoUrl);
             if ($code) {
@@ -397,7 +398,7 @@ class Extension extends AbstractExtension
             return $mobileVideoRender.$this->renderVideo($asset, $options);
         }
 
-        $mobileAsset = $asset->mobileImage?->eagerly()->one() ?? null;
+        $mobileAsset = isset($asset->mobileImage) ? $asset->mobileImage?->eagerly()->one() ?? null : null;
         $mobileImage = $mobileAsset ? $this->renderImageWrap($mobileAsset, [
             ...$options,
             'isMobile' => true,
