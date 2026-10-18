@@ -4,12 +4,14 @@ namespace thewebdudes\craftimageurltransformer;
 
 use Craft;
 use craft\base\Plugin;
+use craft\events\DefineFieldsEvent;
 use craft\imagetransforms\FallbackTransformer;
 use craft\imagetransforms\ImageTransformer as CraftImageTransformer;
 use craft\models\ImageTransform;
 use craft\base\Model;
 use thewebdudes\craftimageurltransformer\web\twig\Extension;
 use thewebdudes\craftimageurltransformer\models\Settings;
+use yii\base\Event;
 
 /**
  * Image Url Transformer plugin
@@ -50,6 +52,15 @@ class ImageUrlTransformer extends Plugin
         Craft::$container->set(
             FallbackTransformer::class,
             ImageTransformer::class,
+        );
+
+        Event::on(
+            ImageTransform::class,
+            Model::EVENT_DEFINE_FIELDS,
+            function (DefineFieldsEvent $event) {
+                $event->fields['filters'] = 'filters';
+                $event->fields['sizes'] = 'sizes';
+            }
         );
 
         Craft::$app->view->registerTwigExtension(new Extension());
