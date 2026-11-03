@@ -424,18 +424,19 @@ class Extension extends AbstractExtension
         $options['height'] = $height;
         $widthTransform = $options['transform']['width'] ?? 1800;
         $heightTransform = $options['transform']['height'] ?? null;
+        $contain = $options['contain'] ?? null;
         $srcset = null;
 
         if ($width) {
             $src = UrlHelper::url($src, [
-                'width' => $widthTransform ?? null,
-                'height' => $heightTransform ?? null,
+                $contain ? 'max-width' : 'width' => $widthTransform ?? null,
+                $contain ? 'max-height' : 'height' => $heightTransform ?? null,
                 'crop' => 'center'
             ]);
-            $srcset = implode(', ', array_map(function ($m) use ($src, $widthTransform, $heightTransform) {
+            $srcset = implode(', ', array_map(function ($m) use ($src, $widthTransform, $heightTransform, $contain) {
                 return UrlHelper::url($src, [
-                        'width' => $widthTransform ? $widthTransform * $m : null,
-                        'height' => $heightTransform ? $heightTransform * $m : null,
+                        $contain ? 'max-width' : 'width' => $widthTransform ? $widthTransform * $m : null,
+                        $contain ? 'max-height' : 'height' => $heightTransform ? $heightTransform * $m : null,
                         'crop' => 'center'
                     ]) . ' ' . $widthTransform * $m . 'w';
             }, [0.5, 1, 2]));
