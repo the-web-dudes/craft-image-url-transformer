@@ -422,21 +422,20 @@ class Extension extends AbstractExtension
         $height = $shopifyImage['height'] ?? null;
         $options['width'] = $width;
         $options['height'] = $height;
-        $widthTransform = $options['transform']['width'] ?? 1800;
+        $widthTransform = $options['transform']['width'] ?? null;
         $heightTransform = $options['transform']['height'] ?? null;
-        $contain = $options['contain'] ?? null;
         $srcset = null;
 
         if ($width) {
             $src = UrlHelper::url($src, [
-                $contain ? 'max-width' : 'width' => $widthTransform ?? null,
-                $contain ? 'max-height' : 'height' => $heightTransform ?? null,
+                'width' => $widthTransform ?? null,
+                'height' => $heightTransform ?? null,
                 'crop' => 'center'
             ]);
-            $srcset = implode(', ', array_map(function ($m) use ($src, $widthTransform, $heightTransform, $contain) {
+            $srcset = implode(', ', array_map(function ($m) use ($src, $widthTransform, $heightTransform) {
                 return UrlHelper::url($src, [
-                        $contain ? 'max-width' : 'width' => $widthTransform ? $widthTransform * $m : null,
-                        $contain ? 'max-height' : 'height' => $heightTransform ? $heightTransform * $m : null,
+                        'width' => $widthTransform ? $widthTransform * $m : null,
+                        'height' => $heightTransform ? $heightTransform * $m : null,
                         'crop' => 'center'
                     ]) . ' ' . $widthTransform * $m . 'w';
             }, [0.5, 1, 2]));
